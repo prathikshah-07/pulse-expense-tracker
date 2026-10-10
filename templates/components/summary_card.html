@@ -1,0 +1,14 @@
+{% macro summary_card(label, value, subtitle, icon, tone='default') %}
+<div class="summary-card tone-{{ tone }}">
+  <div class="summary-icon">
+    <i data-lucide="{{ icon }}"></i>
+  </div>
+  <div class="summary-body">
+    <div class="summary-label">{{ label }}</div>
+    <div class="summary-value">{{ value }}</div>
+    {% if subtitle %}
+      <div class="summary-sub">{{ subtitle }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}

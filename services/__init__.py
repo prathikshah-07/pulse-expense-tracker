@@ -1,0 +1,1 @@
+"""Service layer: pure financial and business logic."""

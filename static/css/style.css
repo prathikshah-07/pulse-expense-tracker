@@ -1,0 +1,253 @@
+/* =========================================================
+   PULSE — Design System
+   Retro-futuristic finance terminal
+   ========================================================= */
+
+:root {
+  /* --- Palette ----------------------------------------------------- */
+  --bg:            #080710;
+  --bg-sidebar:    #0D0A18;
+  --bg-card:       #131020;
+  --bg-elev:       #19142A;
+  --primary:       #9560FF;
+  --violet:        #B69AFF;
+  --cyan:          #62E7E0;
+  --text:          #F3EEFF;
+  --muted:         #A59ABF;
+  --border:        #302446;
+  --border-soft:   #241A38;
+  --warning:       #FFCA72;
+  --danger:        #FF718D;
+  --success:       #76E5B0;
+
+  /* --- Radii ------------------------------------------------------- */
+  --r-xs: 3px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+
+  /* --- Spacing ----------------------------------------------------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* --- Typography -------------------------------------------------- */
+  --font-body: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-pixel: 'Press Start 2P', 'Inter', monospace;
+
+  /* --- Layout ------------------------------------------------------ */
+  --sidebar-w: 244px;
+  --topbar-h: 76px;
+
+  /* --- Glows ------------------------------------------------------- */
+  --glow-violet: 0 0 0 1px rgba(149, 96, 255, 0.35),
+                 0 0 24px rgba(149, 96, 255, 0.18);
+}
+
+/* =========================================================
+   Reset / base
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Atmospheric background: radial violet + faint scanlines */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% -10%, rgba(149, 96, 255, 0.14), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 95% 10%,  rgba(98, 231, 224, 0.06), transparent 70%),
+    radial-gradient(ellipse 90% 60% at 50% 110%, rgba(149, 96, 255, 0.08), transparent 70%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.015) 0px,
+    rgba(255, 255, 255, 0.015) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
+
+a { color: var(--violet); text-decoration: none; }
+a:hover { color: var(--primary); }
+
+::selection { background: rgba(149, 96, 255, 0.35); color: var(--text); }
+
+/* =========================================================
+   Layout shell
+   ========================================================= */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  z-index: 2;
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding-left: var(--sidebar-w);
+  transition: padding 0.22s ease;
+}
+
+.app-content {
+  flex: 1;
+  padding: var(--s-5) var(--s-6) var(--s-7);
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--s-4) var(--s-6);
+  border-top: 1px solid var(--border-soft);
+  color: var(--muted);
+  font-size: 12px;
+}
+.footer-muted { color: var(--muted); opacity: 0.7; }
+
+/* =========================================================
+   Typography
+   ========================================================= */
+h1, h2, h3, h4, h5 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.pixel {
+  font-family: var(--font-pixel);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.muted { color: var(--muted); }
+
+/* =========================================================
+   Page hero
+   ========================================================= */
+.page-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-5);
+  margin-bottom: var(--s-5);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.page-hero.compact { align-items: center; }
+
+.hero-title {
+  font-size: 26px;
+  line-height: 1.2;
+  background: linear-gradient(90deg, var(--text), var(--violet) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-sub {
+  color: var(--muted);
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.hero-actions { display: flex; gap: var(--s-3); flex-wrap: wrap; }
+
+/* =========================================================
+   Flash messages
+   ========================================================= */
+.flash-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+}
+
+.flash {
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  font-size: 13px;
+}
+.flash-success { border-color: rgba(118, 229, 176, 0.4); color: var(--success); }
+.flash-danger  { border-color: rgba(255, 113, 141, 0.4); color: var(--danger); }
+.flash-warning { border-color: rgba(255, 202, 114, 0.4); color: var(--warning); }
+
+/* =========================================================
+   Grid helpers
+   ========================================================= */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-5);
+  margin-bottom: var(--s-5);
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-4);
+  margin-bottom: var(--s-5);
+}
+
+/* =========================================================
+   Scrollbar
+   ========================================================= */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* =========================================================
+   Motion
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

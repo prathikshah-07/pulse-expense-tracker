@@ -1,0 +1,42 @@
+<header class="app-topbar">
+  <div class="topbar-left">
+    <button class="menu-toggle" id="menuToggle" aria-label="Open menu">
+      <i data-lucide="menu"></i>
+    </button>
+    <div>
+      <h1 class="topbar-title">{{ page_title or 'Overview' }}</h1>
+      {% if page_description %}
+        <p class="topbar-desc">{{ page_description }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <form class="month-picker" method="get" id="monthPickerForm">
+      <i data-lucide="calendar"></i>
+      <select name="month" onchange="this.form.submit()" class="month-select">
+        {% for m in range(1, 13) %}
+          <option value="{{ m }}" {% if m == (month or 0) %}selected{% endif %}>
+            {{ m|month_label(year or 2025) }}
+          </option>
+        {% endfor %}
+      </select>
+      <input type="hidden" name="year" value="{{ year or 2025 }}">
+    </form>
+
+    <a href="{{ url_for('budgets.list_budgets', month=month, year=year) }}"
+       class="bell"
+       aria-label="Budget alerts"
+       title="{{ alert_count or 0 }} budget alert(s)">
+      <i data-lucide="bell"></i>
+      {% if alert_count and alert_count > 0 %}
+        <span class="bell-dot">{{ alert_count }}</span>
+      {% endif %}
+    </a>
+
+    <button class="btn btn-primary" id="openAddTransaction">
+      <i data-lucide="plus"></i>
+      <span>Add Transaction</span>
+    </button>
+  </div>
+</header>

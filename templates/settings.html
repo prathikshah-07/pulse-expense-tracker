@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="page-hero compact">
+  <div>
+    <h2 class="hero-title">Settings</h2>
+    <p class="hero-sub">Preferences and demo-data controls.</p>
+  </div>
+</section>
+
+<section class="grid-2">
+  <!-- PREFERENCES -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Preferences</div>
+        <h3 class="card-title">General</h3>
+      </div>
+    </div>
+
+    <form method="post" action="{{ url_for('settings.save_settings') }}" class="form-stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-row">
+        <label>Currency</label>
+        <input type="text" value="Indian Rupee (₹ INR)" disabled>
+        <small class="muted">Fixed for this build.</small>
+      </div>
+
+      <div class="form-row">
+        <label>Default monthly budget (₹)</label>
+        <input type="number" name="default_monthly_budget"
+               min="1" step="1"
+               value="{{ (form.default_monthly_budget if form and form.default_monthly_budget else default_budget_paise / 100) }}">
+        {% if errors and errors.default_monthly_budget %}
+          <small class="error">{{ errors.default_monthly_budget }}</small>
+        {% endif %}
+      </div>
+
+      <div class="form-row">
+        <label>Budget warning threshold (%)</label>
+        <input type="number" name="budget_warning_threshold"
+               min="1" max="100" step="1"
+               value="{{ (form.budget_warning_threshold if form and form.budget_warning_threshold else warning_threshold) }}">
+        <small class="muted">Budgets over this % show as "approaching limit".</small>
+        {% if errors and errors.budget_warning_threshold %}
+          <small class="error">{{ errors.budget_warning_threshold }}</small>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary">
+        <i data-lucide="save"></i> Save settings
+      </button>
+    </form>
+  </div>
+
+  <!-- DEMO DATA -->
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Data</div>
+        <h3 class="card-title">Demo dataset</h3>
+      </div>
+    </div>
+
+    <div class="kpi-list">
+      <div class="kpi"><span>Transactions</span><strong>{{ tx_count }}</strong></div>
+      <div class="kpi"><span>Budgets</span><strong>{{ budget_count }}</strong></div>
+    </div>
+
+    <p class="muted">
+      Sample data is seeded on first launch so the dashboard looks realistic.
+      Use the buttons below to clear or reset it.
+    </p>
+
+    <div class="danger-zone">
+      <form method="post" action="{{ url_for('settings.clear_data') }}"
+            onsubmit="return confirm('Delete ALL transactions and budgets? This cannot be undone.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-ghost">
+          <i data-lucide="trash-2"></i> Clear transactions & budgets
+        </button>
+      </form>
+
+      <form method="post" action="{{ url_for('settings.reset_demo') }}"
+            onsubmit="return confirm('Reset to demo data? Current data will be replaced.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger">
+          <i data-lucide="refresh-ccw"></i> Reset demo dataset
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% from "components/budget_progress.html" import budget_progress %}
+
+{% block content %}
+
+<section class="page-hero compact">
+  <div>
+    <h2 class="hero-title">Budgets</h2>
+    <p class="hero-sub">One limit per category, recalculated live.</p>
+  </div>
+  <button class="btn btn-primary" id="openAddBudget">
+    <i data-lucide="plus"></i> Add Budget
+  </button>
+</section>
+
+<!-- SUMMARY STRIP -->
+<section class="totals-strip">
+  <div><span>Planned</span><strong>{{ summary.total_limit_paise|inr }}</strong></div>
+  <div><span>Spent</span><strong class="amount-expense">{{ summary.total_spent_paise|inr }}</strong></div>
+  <div><span>Remaining</span><strong class="amount-income">{{ summary.remaining_paise|inr }}</strong></div>
+  <div><span>Overall usage</span><strong>{{ summary.overall_percent|percent(1) }}</strong></div>
+</section>
+
+{% if summary.warning_count or summary.exceeded_count %}
+<div class="alert-strip">
+  <i data-lucide="alert-triangle"></i>
+  <span>
+    {{ summary.warning_count }} budget(s) approaching limit ·
+    {{ summary.exceeded_count }} exceeded.
+  </span>
+</div>
+{% endif %}
+
+<!-- BUDGET LIST -->
+<section class="card">
+  {% if summary.rows %}
+  <div class="budget-list">
+    {% for row in summary.rows %}
+      {{ budget_progress(row, editable=true) }}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <i data-lucide="target"></i>
+    <p>No budgets set for {{ period_label }}.</p>
+    <button class="btn btn-primary" id="openAddBudget">
+      <i data-lucide="plus"></i> Create your first budget
+    </button>
+  </div>
+  {% endif %}
+</section>
+
+<!-- ADD BUDGET MODAL -->
+<div class="modal-backdrop" id="budgetModal" aria-hidden="true">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="budgetModalTitle">Add Budget</h3>
+      <button class="icon-btn" id="budgetModalClose"><i data-lucide="x"></i></button>
+    </div>
+
+    <form id="budgetForm" class="modal-body">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="id" id="budgetId" value="">
+      <input type="hidden" name="month" value="{{ month }}">
+      <input type="hidden" name="year" value="{{ year }}">
+
+      <div class="form-row">
+        <label>Category</label>
+        <select name="category" id="budgetCategory" required>
+          {% for c in EXPENSE_CATEGORIES %}
+            <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>Monthly limit (₹)</label>
+        <input type="number" name="monthly_limit" id="budgetLimit"
+               min="1" step="1" placeholder="e.g. 3000" required>
+      </div>
+
+      <div class="form-errors" id="budgetErrors" hidden></div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="budgetCancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="modal-backdrop" id="confirmBudgetModal" aria-hidden="true">
+  <div class="modal small">
+    <div class="modal-head">
+      <h3>Delete budget?</h3>
+      <button class="icon-btn" data-close-confirm-budget><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmBudgetText">This will remove the budget for this category.</p>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close-confirm-budget>Cancel</button>
+        <button class="btn btn-danger" id="confirmBudgetDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script id="budgetMeta" type="application/json">
+{ "month": {{ month }}, "year": {{ year }} }
+</script>
+<script src="{{ url_for('static', filename='js/budgets.js') }}"></script>
+{% endblock %}

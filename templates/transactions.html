@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="page-hero compact">
+  <div>
+    <h2 class="hero-title">All Transactions</h2>
+    <p class="hero-sub">Search, filter, sort — everything in one place.</p>
+  </div>
+  <button class="btn btn-primary" id="openAddTransaction">
+    <i data-lucide="plus"></i> Add Transaction
+  </button>
+</section>
+
+<!-- FILTERS -->
+<section class="card filter-card">
+  <form method="get" class="filter-grid" id="txFilterForm">
+    <div class="filter-field">
+      <label>Search</label>
+      <input type="text" name="q" value="{{ filters.q }}" placeholder="Description or notes">
+    </div>
+
+    <div class="filter-field">
+      <label>Type</label>
+      <select name="type">
+        <option value="" {% if not filters.type %}selected{% endif %}>All</option>
+        <option value="income" {% if filters.type == 'income' %}selected{% endif %}>Income</option>
+        <option value="expense" {% if filters.type == 'expense' %}selected{% endif %}>Expense</option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label>Category</label>
+      <select name="category">
+        <option value="">All</option>
+        {% for c in EXPENSE_CATEGORIES %}
+          <option value="{{ c }}" {% if filters.category == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+        {% for c in INCOME_CATEGORIES %}
+          <option value="{{ c }}" {% if filters.category == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label>Method</label>
+      <select name="payment">
+        <option value="">All</option>
+        {% for pm in PAYMENT_METHODS %}
+          <option value="{{ pm }}" {% if filters.payment == pm %}selected{% endif %}>{{ pm }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label>From</label>
+      <input type="date" name="from" value="{{ filters.from }}">
+    </div>
+
+    <div class="filter-field">
+      <label>To</label>
+      <input type="date" name="to" value="{{ filters.to }}">
+    </div>
+
+    <div class="filter-field">
+      <label>Sort</label>
+      <select name="sort">
+        <option value="date_desc"   {% if filters.sort == 'date_desc' %}selected{% endif %}>Newest first</option>
+        <option value="date_asc"    {% if filters.sort == 'date_asc' %}selected{% endif %}>Oldest first</option>
+        <option value="amount_desc" {% if filters.sort == 'amount_desc' %}selected{% endif %}>Amount: high → low</option>
+        <option value="amount_asc"  {% if filters.sort == 'amount_asc' %}selected{% endif %}>Amount: low → high</option>
+      </select>
+    </div>
+
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-primary"><i data-lucide="filter"></i> Apply</button>
+      <a href="{{ url_for('transactions.list_transactions') }}" class="btn btn-ghost"><i data-lucide="rotate-ccw"></i> Reset</a>
+    </div>
+  </form>
+</section>
+
+<!-- TOTALS STRIP -->
+<section class="totals-strip">
+  <div><span>Income (filtered)</span><strong class="amount-income">{{ income_total|inr }}</strong></div>
+  <div><span>Expenses (filtered)</span><strong class="amount-expense">{{ expense_total|inr }}</strong></div>
+  <div><span>Net</span><strong>{{ (income_total - expense_total)|inr }}</strong></div>
+  <div><span>Results</span><strong>{{ pagination.total }}</strong></div>
+</section>
+
+<!-- TABLE -->
+<section class="card">
+  {% if transactions %}
+  <div class="table-wrap">
+    <table class="table pulse-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Method</th>
+          <th class="ta-r">Amount</th>
+          <th class="ta-c">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+        <tr data-id="{{ t.id }}">
+          <td>
+            <div class="tx-desc">
+              <span class="tx-dot" style="background: {{ CATEGORY_META.get(t.category, {}).get('color', '#A59ABF') }}"></span>
+              <span>{{ t.description }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="type-pill type-{{ t.transaction_type }}">{{ t.transaction_type }}</span>
+          </td>
+          <td>
+            <span class="chip">
+              <i data-lucide="{{ CATEGORY_META.get(t.category, {}).get('icon', 'tag') }}"></i>
+              {{ t.category }}
+            </span>
+          </td>
+          <td class="muted">{{ t.transaction_date|date_fmt }}</td>
+          <td class="muted">{{ t.payment_method }}</td>
+          <td class="ta-r amount {% if t.is_income %}amount-income{% else %}amount-expense{% endif %}">
+            {% if t.is_income %}+{% else %}−{% endif %}{{ t.amount_paise|inr }}
+          </td>
+          <td class="ta-c">
+            <button class="icon-btn edit-tx" data-id="{{ t.id }}" title="Edit">
+              <i data-lucide="pencil"></i>
+            </button>
+            <button class="icon-btn danger delete-tx" data-id="{{ t.id }}" title="Delete">
+              <i data-lucide="trash-2"></i>
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if pagination.pages > 1 %}
+  <nav class="pagination">
+    {% if pagination.has_prev %}
+      <a class="page-btn" href="{{ url_for('transactions.list_transactions', page=pagination.prev_num, **filters) }}">← Prev</a>
+    {% else %}
+      <span class="page-btn is-disabled">← Prev</span>
+    {% endif %}
+
+    <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+      <a class="page-btn" href="{{ url_for('transactions.list_transactions', page=pagination.next_num, **filters) }}">Next →</a>
+    {% else %}
+      <span class="page-btn is-disabled">Next →</span>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <div class="empty">
+    <i data-lucide="search-x"></i>
+    <p>No transactions match your filters.</p>
+    <a class="btn btn-ghost" href="{{ url_for('transactions.list_transactions') }}">Clear filters</a>
+  </div>
+  {% endif %}
+</section>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-backdrop" id="confirmModal" aria-hidden="true">
+  <div class="modal small">
+    <div class="modal-head">
+      <h3>Delete transaction?</h3>
+      <button class="icon-btn" data-close-confirm aria-label="Close"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>This action cannot be undone.</p>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close-confirm>Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include "components/transaction_modal.html" %}
+
+{% endblock %}
+
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/transactions.js') }}"></script>
+{% endblock %}

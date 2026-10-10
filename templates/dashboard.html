@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% from "components/summary_card.html" import summary_card %}
+{% from "components/budget_progress.html" import budget_progress %}
+
+{% block content %}
+
+<!-- HEADER -->
+<section class="page-hero">
+  <div>
+    <h2 class="hero-title">Good money habits start here.</h2>
+    <p class="hero-sub">Your financial snapshot, without the guesswork.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn btn-ghost" href="{{ url_for('analytics.analytics_home', month=month, year=year) }}">
+      <i data-lucide="line-chart"></i> View Analytics
+    </a>
+    <button class="btn btn-primary" id="openAddTransaction">
+      <i data-lucide="plus"></i> Add Transaction
+    </button>
+  </div>
+</section>
+
+<!-- SUMMARY CARDS -->
+<section class="grid-4">
+  {{ summary_card(
+      "Total Income",
+      totals.income_paise|inr,
+      "Received in " ~ period_label,
+      "arrow-down-circle",
+      "success"
+  ) }}
+  {{ summary_card(
+      "Total Expenses",
+      totals.expense_paise|inr,
+      "Spent in " ~ period_label,
+      "arrow-up-circle",
+      "danger"
+  ) }}
+  {{ summary_card(
+      "Remaining Balance",
+      totals.balance_paise|inr,
+      totals.transaction_count ~ " transactions logged",
+      "wallet",
+      "default"
+  ) }}
+  {{ summary_card(
+      "Savings Rate",
+      totals.savings_rate|percent(1),
+      "Income minus expenses",
+      "piggy-bank",
+      "accent"
+  ) }}
+</section>
+
+<!-- CHARTS -->
+<section class="grid-2">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Cash flow</div>
+        <h3 class="card-title">Income vs Expenses</h3>
+      </div>
+      <span class="card-tag">Last {{ chart_cashflow.labels|length }} months</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="cashflowChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Breakdown</div>
+        <h3 class="card-title">Spending by Category</h3>
+      </div>
+      <span class="card-tag">{{ period_label }}</span>
+    </div>
+
+    {% if chart_category.labels %}
+    <div class="doughnut-wrap">
+      <div class="chart-wrap small">
+        <canvas id="categoryChart"></canvas>
+      </div>
+      <ul class="legend">
+        {% for c in categories %}
+        <li>
+          <span class="legend-dot" style="background: {{ CATEGORY_META.get(c.category, {}).get('color', '#A59ABF') }}"></span>
+          <span class="legend-label">{{ c.category }}</span>
+          <span class="legend-val">{{ c.total_paise|inr }}</span>
+          <span class="legend-pct">{{ c.percent|percent(1) }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% else %}
+    <div class="empty">
+      <i data-lucide="pie-chart"></i>
+      <p>No expenses logged in {{ period_label }}.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- BUDGETS + INSIGHTS -->
+<section class="grid-2">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Budgets</div>
+        <h3 class="card-title">This month's limits</h3>
+      </div>
+      <a class="link-more" href="{{ url_for('budgets.list_budgets', month=month, year=year) }}">
+        Manage <i data-lucide="arrow-right"></i>
+      </a>
+    </div>
+
+    {% if budget_summary.rows %}
+    <div class="budget-summary-strip">
+      <div><span>Planned</span><strong>{{ budget_summary.total_limit_paise|inr }}</strong></div>
+      <div><span>Spent</span><strong>{{ budget_summary.total_spent_paise|inr }}</strong></div>
+      <div><span>Remaining</span><strong>{{ budget_summary.remaining_paise|inr }}</strong></div>
+    </div>
+    <div class="budget-list">
+      {% for row in budget_summary.rows %}
+        {{ budget_progress(row) }}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">
+      <i data-lucide="target"></i>
+      <p>No budgets yet for {{ period_label }}.</p>
+      <a class="btn btn-primary" href="{{ url_for('budgets.list_budgets', month=month, year=year) }}">
+        Create a budget
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Insights</div>
+        <h3 class="card-title">What the numbers say</h3>
+      </div>
+    </div>
+    <ul class="insight-list">
+      {% for ins in insights %}
+      <li class="insight tone-{{ ins.tone }}">
+        <span class="insight-icon"><i data-lucide="{{ ins.icon }}"></i></span>
+        <div class="insight-body">
+          <strong>{{ ins.title }}</strong>
+          <p>{{ ins.body }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<!-- RECENT TRANSACTIONS -->
+<section class="card">
+  <div class="card-head">
+    <div>
+      <div class="card-eyebrow">Recent activity</div>
+      <h3 class="card-title">Latest transactions</h3>
+    </div>
+    <a class="link-more" href="{{ url_for('transactions.list_transactions') }}">
+      View all <i data-lucide="arrow-right"></i>
+    </a>
+  </div>
+
+  {% if recent %}
+  <div class="table-wrap">
+    <table class="table pulse-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Method</th>
+          <th class="ta-r">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in recent %}
+        <tr>
+          <td>
+            <div class="tx-desc">
+              <span class="tx-dot" style="background: {{ CATEGORY_META.get(t.category, {}).get('color', '#A59ABF') }}"></span>
+              <span>{{ t.description }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="chip">
+              <i data-lucide="{{ CATEGORY_META.get(t.category, {}).get('icon', 'tag') }}"></i>
+              {{ t.category }}
+            </span>
+          </td>
+          <td class="muted">{{ t.transaction_date|date_fmt }}</td>
+          <td class="muted">{{ t.payment_method }}</td>
+          <td class="ta-r amount {% if t.is_income %}amount-income{% else %}amount-expense{% endif %}">
+            {% if t.is_income %}+{% else %}−{% endif %}{{ t.amount_paise|inr }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty">
+    <i data-lucide="inbox"></i>
+    <p>No transactions yet. Add your first one to see it here.</p>
+    <button class="btn btn-primary" id="openAddTransaction">
+      <i data-lucide="plus"></i> Add transaction
+    </button>
+  </div>
+  {% endif %}
+</section>
+
+{% include "components/transaction_modal.html" %}
+
+{% endblock %}
+
+
+{% block scripts %}
+<script id="dashboardData" type="application/json">
+{
+  "cashflow": {{ chart_cashflow | tojson }},
+  "category": {{ chart_category | tojson }}
+}
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

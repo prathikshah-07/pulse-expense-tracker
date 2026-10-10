@@ -1,0 +1,76 @@
+<div class="modal-backdrop" id="txModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="txModalTitle">
+    <div class="modal-head">
+      <h3 id="txModalTitle">Add Transaction</h3>
+      <button class="icon-btn" id="txModalClose" aria-label="Close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <form id="txForm" class="modal-body" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="id" id="txId" value="">
+
+      <div class="segmented" role="tablist">
+        <button type="button" class="seg-btn is-active" data-type="expense">Expense</button>
+        <button type="button" class="seg-btn" data-type="income">Income</button>
+      </div>
+      <input type="hidden" name="transaction_type" id="txType" value="expense">
+
+      <div class="form-row">
+        <label>Description</label>
+        <input type="text" name="description" id="txDescription"
+               maxlength="200" placeholder="e.g. Canteen lunch" required>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Amount (₹)</label>
+          <input type="number" name="amount" id="txAmount"
+                 min="0.01" step="0.01" placeholder="0.00" required>
+        </div>
+
+        <div class="form-row">
+          <label>Date</label>
+          <input type="date" name="transaction_date" id="txDate" required>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Category</label>
+          <select name="category" id="txCategory" required></select>
+        </div>
+
+        <div class="form-row">
+          <label>Payment method</label>
+          <select name="payment_method" id="txPayment" required>
+            {% for pm in PAYMENT_METHODS %}
+              <option value="{{ pm }}">{{ pm }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Notes <span class="muted">(optional)</span></label>
+        <textarea name="notes" id="txNotes" rows="2"
+                  maxlength="500" placeholder="Any context..."></textarea>
+      </div>
+
+      <div class="form-errors" id="txErrors" hidden></div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="txCancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="txSubmit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script id="categoriesData" type="application/json">
+{
+  "expense": {{ EXPENSE_CATEGORIES | tojson }},
+  "income": {{ INCOME_CATEGORIES | tojson }}
+}
+</script>

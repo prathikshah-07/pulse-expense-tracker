@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="page-hero compact">
+  <div>
+    <h2 class="hero-title">Analytics</h2>
+    <p class="hero-sub">Trends, categories, and where the money actually goes.</p>
+  </div>
+  <form class="month-picker" method="get">
+    <i data-lucide="calendar"></i>
+    <select name="month" onchange="this.form.submit()" class="month-select">
+      {% for m in range(1, 13) %}
+        <option value="{{ m }}" {% if m == month %}selected{% endif %}>
+          {{ m|month_label(year) }}
+        </option>
+      {% endfor %}
+    </select>
+    <input type="hidden" name="year" value="{{ year }}">
+  </form>
+</section>
+
+<!-- KPI CARDS -->
+<section class="grid-4">
+  <div class="summary-card tone-success">
+    <div class="summary-icon"><i data-lucide="trending-up"></i></div>
+    <div class="summary-body">
+      <div class="summary-label">Total Income</div>
+      <div class="summary-value">{{ totals.income_paise|inr }}</div>
+      <div class="summary-sub">{{ period_label }}</div>
+    </div>
+  </div>
+  <div class="summary-card tone-danger">
+    <div class="summary-icon"><i data-lucide="trending-down"></i></div>
+    <div class="summary-body">
+      <div class="summary-label">Total Expenses</div>
+      <div class="summary-value">{{ totals.expense_paise|inr }}</div>
+      <div class="summary-sub">{{ period_label }}</div>
+    </div>
+  </div>
+  <div class="summary-card tone-default">
+    <div class="summary-icon"><i data-lucide="calendar-days"></i></div>
+    <div class="summary-body">
+      <div class="summary-label">Avg Daily Spend</div>
+      <div class="summary-value">{{ avg_daily_paise|inr }}</div>
+      <div class="summary-sub">Per elapsed day</div>
+    </div>
+  </div>
+  <div class="summary-card tone-accent">
+    <div class="summary-icon"><i data-lucide="piggy-bank"></i></div>
+    <div class="summary-body">
+      <div class="summary-label">Savings Rate</div>
+      <div class="summary-value">{{ all_time.savings_rate|percent(1) }}</div>
+      <div class="summary-sub">All-time</div>
+    </div>
+  </div>
+</section>
+
+<!-- TREND -->
+<section class="card">
+  <div class="card-head">
+    <div>
+      <div class="card-eyebrow">Trend</div>
+      <h3 class="card-title">Income vs Expenses over months</h3>
+    </div>
+  </div>
+  <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
+</section>
+
+<!-- GRIDS -->
+<section class="grid-2">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Categories</div>
+        <h3 class="card-title">Expense distribution</h3>
+      </div>
+    </div>
+    {% if chart_category.labels %}
+      <div class="chart-wrap"><canvas id="analyticsCategoryChart"></canvas></div>
+    {% else %}
+      <div class="empty"><i data-lucide="pie-chart"></i><p>No expenses in {{ period_label }}.</p></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Top 5</div>
+        <h3 class="card-title">Biggest spending categories</h3>
+      </div>
+    </div>
+    {% if categories %}
+    <ul class="top-list">
+      {% for c in categories[:5] %}
+      <li>
+        <div class="top-row">
+          <span class="legend-dot" style="background: {{ CATEGORY_META.get(c.category, {}).get('color', '#A59ABF') }}"></span>
+          <span class="top-name">{{ c.category }}</span>
+          <span class="top-val">{{ c.total_paise|inr }}</span>
+        </div>
+        <div class="top-bar"><div style="width: {{ c.percent }}%; background: {{ CATEGORY_META.get(c.category, {}).get('color', '#A59ABF') }}"></div></div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <div class="empty"><i data-lucide="bar-chart-3"></i><p>Nothing to rank yet.</p></div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="grid-2">
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Payment methods</div>
+        <h3 class="card-title">How you pay</h3>
+      </div>
+    </div>
+    {% if payments %}
+      <div class="chart-wrap"><canvas id="paymentChart"></canvas></div>
+      <ul class="legend">
+        {% for p in payments %}
+        <li>
+          <i data-lucide="{{ PAYMENT_META.get(p.payment_method, {}).get('icon', 'circle') }}"></i>
+          <span class="legend-label">{{ p.payment_method }}</span>
+          <span class="legend-val">{{ p.total_paise|inr }}</span>
+          <span class="legend-pct">{{ p.percent|percent(1) }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty"><i data-lucide="credit-card"></i><p>No expenses yet.</p></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-eyebrow">Lifetime</div>
+        <h3 class="card-title">All-time summary</h3>
+      </div>
+    </div>
+    <div class="kpi-list">
+      <div class="kpi"><span>Total income</span><strong class="amount-income">{{ all_time.income_paise|inr }}</strong></div>
+      <div class="kpi"><span>Total expenses</span><strong class="amount-expense">{{ all_time.expense_paise|inr }}</strong></div>
+      <div class="kpi"><span>Net savings</span><strong>{{ all_time.savings_paise|inr }}</strong></div>
+      <div class="kpi"><span>Savings rate</span><strong>{{ all_time.savings_rate|percent(1) }}</strong></div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script id="analyticsData" type="application/json">
+{
+  "category": {{ chart_category | tojson }},
+  "trend": {{ chart_trend | tojson }},
+  "payment": {{ chart_payment | tojson }}
+}
+</script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

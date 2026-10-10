@@ -1,0 +1,61 @@
+<aside class="app-sidebar" id="appSidebar">
+  <div class="sidebar-stars" aria-hidden="true"></div>
+
+  <div class="sidebar-header">
+    <a href="{{ url_for('dashboard.overview') }}" class="brand">
+      <span class="brand-mark">P</span>
+      <span class="brand-word">PULSE</span>
+    </a>
+    <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">
+      <i data-lucide="x"></i>
+    </button>
+  </div>
+
+  <div class="sidebar-tagline">See your money clearly.</div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu</div>
+
+    <a href="{{ url_for('dashboard.overview') }}"
+       class="nav-item {% if request.endpoint == 'dashboard.overview' %}is-active{% endif %}">
+      <i data-lucide="layout-dashboard"></i>
+      <span>Overview</span>
+    </a>
+
+    <a href="{{ url_for('transactions.list_transactions') }}"
+       class="nav-item {% if request.endpoint and request.endpoint.startswith('transactions.') %}is-active{% endif %}">
+      <i data-lucide="arrow-left-right"></i>
+      <span>Transactions</span>
+    </a>
+
+    <a href="{{ url_for('budgets.list_budgets') }}"
+       class="nav-item {% if request.endpoint and request.endpoint.startswith('budgets.') %}is-active{% endif %}">
+      <i data-lucide="target"></i>
+      <span>Budgets</span>
+    </a>
+
+    <a href="{{ url_for('analytics.analytics_home') }}"
+       class="nav-item {% if request.endpoint and request.endpoint.startswith('analytics.') %}is-active{% endif %}">
+      <i data-lucide="bar-chart-3"></i>
+      <span>Analytics</span>
+    </a>
+
+    <a href="{{ url_for('settings.show_settings') }}"
+       class="nav-item {% if request.endpoint and request.endpoint.startswith('settings.') %}is-active{% endif %}">
+      <i data-lucide="settings-2"></i>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-period">
+      <span class="period-label">Active month</span>
+      <span class="period-value">
+        {% if month and year %}{{ month|month_label(year) }}{% else %}—{% endif %}
+      </span>
+    </div>
+    <div class="sidebar-hint">Demo data · no real UPI</div>
+  </div>
+</aside>
+
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>

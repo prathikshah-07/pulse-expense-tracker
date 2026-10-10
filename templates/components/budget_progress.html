@@ -1,0 +1,50 @@
+{% macro budget_progress(row, editable=false) %}
+<div class="budget-row status-{{ row.status }}" data-budget-id="{{ row.id }}">
+  <div class="budget-head">
+    <div class="budget-cat">
+      <span class="cat-dot" style="background: {{ row.color }}"></span>
+      <i data-lucide="{{ row.icon }}"></i>
+      <span>{{ row.category }}</span>
+    </div>
+    <div class="budget-nums">
+      <span class="spent">{{ row.spent_paise|inr }}</span>
+      <span class="sep">/</span>
+      <span class="limit">{{ row.limit_paise|inr }}</span>
+    </div>
+  </div>
+
+  <div class="budget-bar">
+    <div class="budget-bar-fill"
+         style="width: {{ [row.usage_percent, 100]|min }}%;
+                background: {{ row.color }}">
+    </div>
+  </div>
+
+  <div class="budget-foot">
+    <span class="budget-status">
+      {% if row.status == 'exceeded' %}
+        Exceeded by {{ (-row.remaining_paise)|inr }}
+      {% elif row.status == 'warning' %}
+        Approaching · {{ row.remaining_paise|inr }} left
+      {% else %}
+        {{ row.remaining_paise|inr }} left
+      {% endif %}
+    </span>
+    <span class="budget-pct">{{ row.usage_percent|percent(1) }}</span>
+  </div>
+
+  {% if editable %}
+  <div class="budget-actions">
+    <button class="icon-btn edit-budget" data-id="{{ row.id }}"
+            data-limit="{{ row.limit_paise / 100 }}"
+            data-category="{{ row.category }}" title="Edit">
+      <i data-lucide="pencil"></i>
+    </button>
+    <button class="icon-btn danger delete-budget" data-id="{{ row.id }}"
+            data-category="{{ row.category }}" title="Delete">
+      <i data-lucide="trash-2"></i>
+    </button>
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}
